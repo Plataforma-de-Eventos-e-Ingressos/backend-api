@@ -1,12 +1,13 @@
 from database import SessionLocal
-from models import User, Event, Ticket
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
+from models import User, Event, RoleEnum
+import bcrypt
+from datetime import datetime, timedelta, timezone
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    pwd_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
+    return hashed_password.decode('utf-8')
 
 def run_seed():
     db = SessionLocal()
@@ -44,17 +45,20 @@ def run_seed():
         event = Event(
             organizer_id=organizer.id,
             title="Evento de Teste",
-            event_datetime=datetime.utcnow() + timedelta(days=30),
+            event_datetime=datetime.now(timezone.utc) + timedelta(days=30),
             location="Local de Teste",
             price=100.0,
-            total_tickets=100
+            total_capacity=100
         )   
 
         db.add(event)
         db.commit()
-
+        print("Seed concluído")
     except Exception as e:
         db.rollback()
         print(f"Error seeding database: {e}")
     finally:
         db.close()
+
+if __name__ == "__main__":
+    run_seed()
