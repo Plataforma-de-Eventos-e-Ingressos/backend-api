@@ -60,6 +60,19 @@ A API estará disponível em `http://localhost:8000`.
 
 ---
 
+### 3. Executando as Migrações do Banco de Dados
+
+Antes de iniciar a API pela primeira vez, é obrigatório criar as tabelas no banco de dados. Este projeto utiliza o **Alembic** para gerenciar as migrações.
+
+Com o ambiente virtual ativado e o banco de dados rodando (via Docker), execute na raiz do projeto (`backend-api`):
+
+```bash
+# Aplica todas as migrações pendentes e cria as tabelas
+alembic upgrade head
+(Opcional para desenvolvedores) Se você alterar os modelos (models.py), gere uma nova migração com o comando:
+
+alembic revision --autogenerate -m "descricao_da_alteracao"
+
 ## 📖 Documentação da API (Swagger)
 
 O FastAPI gera a documentação interativa automaticamente. Com o servidor rodando, acesse:
