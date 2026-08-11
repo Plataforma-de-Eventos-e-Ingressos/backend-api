@@ -1,6 +1,6 @@
 import uuid
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
@@ -27,7 +27,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     events = relationship("Event", back_populates="organizer")
     tickets = relationship("Ticket", back_populates="client")
@@ -58,7 +58,7 @@ class Ticket(Base):
     seat = Column(String, nullable=True) 
     status = Column(Enum(TicketStatus), default=TicketStatus.RESERVED)
     qr_token = Column(String, unique=True, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     event = relationship("Event", back_populates="tickets")
     client = relationship("User", back_populates="tickets")
