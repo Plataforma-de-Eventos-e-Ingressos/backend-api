@@ -1,4 +1,3 @@
-```markdown
 # ⚙️ Backend API - Elite Tickets
 
 Este repositório contém a API RESTful desenvolvida para a plataforma de eventos e ingressos, parte do desafio técnico **Elite Dev** da **Verzel**.
