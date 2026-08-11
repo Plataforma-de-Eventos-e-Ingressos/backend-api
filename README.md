@@ -155,6 +155,28 @@ alembic upgrade head
 
 ---
 
+## 🧪 Populando o Banco de Dados (Seed)
+
+Para facilitar os testes locais, o projeto disponibiliza um script de **seed** responsável por popular o banco de dados com dados iniciais.
+
+O seed cria os usuários base do sistema:
+
+* 👤 **Organizador**
+* 🎟️ **Cliente**
+* 🚪 **Portaria**
+* 🎫 Um evento de exemplo com ingressos disponíveis
+
+Com o PostgreSQL em execução e as migrações aplicadas, execute na raiz do projeto:
+
+```bash
+python seed.py
+```
+
+Após a execução, os dados estarão disponíveis para realizar os testes dos principais fluxos da aplicação.
+
+> **Nota:** o script de seed deve ser utilizado apenas em ambientes de desenvolvimento/teste. Não é recomendado executá-lo em ambientes de produção.
+
+
 ## ▶️ Iniciando a API
 
 Com o ambiente virtual ativado, as dependências instaladas, as variáveis configuradas e as migrações aplicadas, execute:
