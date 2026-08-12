@@ -5,9 +5,9 @@ import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from database import get_db
-from models import User, RoleEnum
-from schemas import LoginRequest, TokenResponse, UserCreate, UserResponse
+from app.core.database import get_db
+from app.models.models import User, RoleEnum
+from app.schemas.schemas import LoginRequest, TokenResponse, UserCreate, UserResponse
 from dotenv import load_dotenv
 
 load_dotenv()

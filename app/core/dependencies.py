@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session
 import jwt
 from jwt.exceptions import InvalidTokenError
 
-from database import get_db
-from models import User, RoleEnum
-from auth import SECRET_KEY, ALGORITHM 
+from app.core.database import get_db
+from app.models.models import User, RoleEnum
+from app.routers.auth import SECRET_KEY, ALGORITHM 
 
 security = HTTPBearer()
 
