@@ -7,7 +7,7 @@ from app.models.models import Event, User, RoleEnum
 from app.schemas.schemas import EventCreate, EventResponse
 from app.core.dependencies import RoleChecker
 from app.services.services import search_movies
-import uuid
+from uuid import UUID
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -33,7 +33,7 @@ def list_events(db: Session = Depends(get_db)):
     return db.query(Event).all()
 
 @router.get("/{id}", response_model=EventResponse)
-def get_event(id: uuid.UUID, db: Session = Depends(get_db)):
+def get_event(id: UUID, db: Session = Depends(get_db)):
     event = db.query(Event).filter(Event.id == id).first()
     
     if not event:
