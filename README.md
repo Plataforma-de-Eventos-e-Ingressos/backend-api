@@ -1,4 +1,4 @@
-# ⚙️ Backend API - Elite Tickets
+# ⚙️ Backend API - Event and Ticketing Platform API
 
 Este repositório contém a **API RESTful** da plataforma de eventos e ingressos desenvolvida para o desafio técnico **Elite Dev**, da **Verzel**.
 
