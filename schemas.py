@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
+from models import RoleEnum
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -24,6 +25,19 @@ class EventCreate(EventBase):
 class EventResponse(EventBase):
     id: UUID
     organizer_id: UUID
+
+    class Config:
+        from_attributes = True
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+class UserResponse(BaseModel):
+    id: UUID
+    name: str
+    email: EmailStr
+    role: RoleEnum
 
     class Config:
         from_attributes = True
