@@ -1,5 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 import auth
+import events 
+from models import User, RoleEnum
+from dependencies import get_current_user, RoleChecker
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(
     title="Event and Ticketing Platform API",
@@ -7,7 +13,16 @@ app = FastAPI(
     version="1.0.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth.router)
+app.include_router(events.router)
 
 @app.get("/health", tags=["Health"])
 def health_check():

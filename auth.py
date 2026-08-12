@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 from database import get_db
 from models import User
 from schemas import LoginRequest, TokenResponse
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 SECRET_KEY = os.getenv("SECRET_KEY", "chave_secreta_para_uso_local")
