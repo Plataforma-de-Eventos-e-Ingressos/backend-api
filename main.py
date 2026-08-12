@@ -1,5 +1,10 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 import auth
+import events 
+from models import User, RoleEnum
+from dependencies import get_current_user, RoleChecker
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI(
     title="Event and Ticketing Platform API",
@@ -8,6 +13,7 @@ app = FastAPI(
 )
 
 app.include_router(auth.router)
+app.include_router(events.router)
 
 @app.get("/health", tags=["Health"])
 def health_check():
