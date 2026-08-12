@@ -1,9 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import auth
-import events 
-from models import User, RoleEnum
-from dependencies import get_current_user, RoleChecker
+from app.routers import auth, events
+from app.core.dependencies import RoleChecker
 from dotenv import load_dotenv
 load_dotenv()
 

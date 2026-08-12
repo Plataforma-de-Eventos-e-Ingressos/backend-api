@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
-from models import RoleEnum
+from app.models.models import RoleEnum
 
 class LoginRequest(BaseModel):
     email: EmailStr

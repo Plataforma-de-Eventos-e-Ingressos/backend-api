@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from database import get_db
-from models import Event, User, RoleEnum
-from schemas import EventCreate, EventResponse
-from dependencies import RoleChecker
-import services
+from app.core.database import get_db
+from app.models.models import Event, User, RoleEnum
+from app.schemas.schemas import EventCreate, EventResponse
+from app.core.dependencies import RoleChecker
+from app.services.services import search_movies
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
@@ -33,4 +33,4 @@ def list_events(db: Session = Depends(get_db)):
 
 @router.get("/tmdb/search")
 def search_tmdb_movies(query: str, current_user: User = Depends(allow_organizador)):
-    return services.search_movies(query)
+    return search_movies(query)
