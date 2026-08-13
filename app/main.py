@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, events
+from app.routers import auth, events, tickets
 from app.core.dependencies import RoleChecker
 from dotenv import load_dotenv
 load_dotenv()
@@ -21,6 +21,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(events.router)
+app.include_router(tickets.router)
 
 @app.get("/health", tags=["Health"])
 def health_check():

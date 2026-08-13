@@ -9,8 +9,8 @@ import os
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from database import Base, SQLALCHEMY_DATABASE_URL
-import models 
+from app.core.database import Base, SQLALCHEMY_DATABASE_URL
+import app.models.models 
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

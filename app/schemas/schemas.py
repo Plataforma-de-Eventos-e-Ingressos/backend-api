@@ -19,12 +19,14 @@ class EventBase(BaseModel):
     price: float
     total_capacity: int
     external_api_id: Optional[str] = None
+    description: Optional[str] = None
 
 class EventCreate(EventBase):
     pass
 class EventResponse(EventBase):
     id: UUID
     organizer_id: UUID
+    description: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -41,3 +43,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TicketCreate(BaseModel):
+    event_id: UUID
+    seat: Optional[str] = None
