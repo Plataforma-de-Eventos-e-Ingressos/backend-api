@@ -1,7 +1,7 @@
 import uuid
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Enum
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Enum, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -44,6 +44,7 @@ class Event(Base):
     location = Column(String, nullable=False)
     price = Column(Float, nullable=False)
     total_capacity = Column(Integer, nullable=False)
+    description = Column(Text, nullable=True)
 
     organizer = relationship("User", back_populates="events")
     tickets = relationship("Ticket", back_populates="event")

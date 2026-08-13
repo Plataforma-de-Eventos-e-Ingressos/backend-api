@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
 from typing import Optional
 from uuid import UUID
@@ -19,12 +19,14 @@ class EventBase(BaseModel):
     price: float
     total_capacity: int
     external_api_id: Optional[str] = None
+    description: Optional[str] = None
 
 class EventCreate(EventBase):
     pass
 class EventResponse(EventBase):
     id: UUID
     organizer_id: UUID
+    description: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -41,3 +43,17 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TicketCreate(BaseModel):
+    event_id: UUID
+    seat: Optional[str] = None
+
+class TicketResponse(BaseModel):
+    id: UUID
+    event_id: UUID
+    seat: Optional[str] = None
+    status: str
+    qr_token: str
+    event: EventResponse  # Traz os dados do evento embutidos (nome, data, local)
+
+    model_config = ConfigDict(from_attributes=True)
