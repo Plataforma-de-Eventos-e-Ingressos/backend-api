@@ -21,12 +21,28 @@ class EventBase(BaseModel):
     external_api_id: Optional[str] = None
     description: Optional[str] = None
 
-class EventCreate(EventBase):
-    pass
+class EventCreate(BaseModel):
+    title: str
+    event_datetime: datetime
+    location: str
+    price: float
+    total_capacity: int
+    description: Optional[str] = None
+    poster_url: Optional[str] = None
+
+class EventUpdate(BaseModel):
+    title: Optional[str] = None
+    event_datetime: Optional[datetime] = None
+    location: Optional[str] = None
+    price: Optional[float] = None
+    total_capacity: Optional[int] = None
+    description: Optional[str] = None
+    poster_url: Optional[str] = None
 class EventResponse(EventBase):
     id: UUID
     organizer_id: UUID
     description: Optional[str] = None
+    poster_url: Optional[str] = None
 
     class Config:
         from_attributes = True
