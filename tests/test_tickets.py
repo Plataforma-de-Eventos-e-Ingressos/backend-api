@@ -20,7 +20,8 @@ def create_mock_event(db_session, capacity=2):
         location="Teatro Teste",
         total_capacity=capacity, 
         price=100.00,
-        description="Descrição de teste"
+        description="Descrição de teste",
+        organizer_id=uuid.uuid4()
     )
     db_session.add(event)
     db_session.commit()
@@ -87,3 +88,47 @@ def test_reserve_ticket_event_not_found(client, auth_headers):
     
     assert response.status_code == 404
     assert response.json()["detail"] == "Evento não encontrado."
+
+def test_get_my_tickets_empty(client, auth_headers):
+    """Testa se um usuário que ainda não comprou nada recebe uma lista vazia."""
+    response = client.get("/tickets/me", headers=auth_headers)
+    
+    assert response.status_code == 200
+    assert response.json() == []
+
+def test_get_my_tickets_success(client, db_session, auth_headers):
+    """Testa se a rota retorna os ingressos com os dados do evento embutidos."""
+    # 1. Cria um evento de teste
+    event = create_mock_event(db_session)
+    
+    # 2. Faz uma compra usando o token do usuário de teste
+    reserve_payload = {
+        "event_id": str(event.id),
+        "seat": "Camarote-01"
+    }
+    client.post("/tickets/reserve", json=reserve_payload, headers=auth_headers)
+    
+    # 3. Consulta a lista de ingressos do usuário
+    response = client.get("/tickets/me", headers=auth_headers)
+    
+    assert response.status_code == 200
+    data = response.json()
+    
+    # Validações
+    assert len(data) == 1
+    ticket = data[0]
+    assert ticket["seat"] == "Camarote-01"
+    assert ticket["event_id"] == str(event.id)
+    assert "qr_token" in ticket
+    
+    # Verifica o 'joinedload': Os dados do evento devem ter vindo junto!
+    assert "event" in ticket
+    assert ticket["event"]["title"] == "Evento Teste de Ingressos"
+    assert ticket["event"]["total_capacity"] == 2
+
+def test_get_my_tickets_unauthorized(client):
+    """Testa se a rota é protegida e bloqueia acesso sem token."""
+    response = client.get("/tickets/me")
+    
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Not authenticated"

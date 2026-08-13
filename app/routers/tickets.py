@@ -2,14 +2,15 @@ import uuid
 import hashlib
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 import jwt
 from jwt.exceptions import InvalidTokenError
+from typing import List
 
 from app.core.database import get_db
 from app.models.models import Event, Ticket, TicketStatus
-from app.schemas.schemas import TicketCreate
+from app.schemas.schemas import TicketCreate, TicketResponse
 from dotenv import load_dotenv
 import os
 
@@ -79,3 +80,19 @@ def reserve_ticket(
     db.refresh(new_ticket)
 
     return new_ticket
+
+@router.get("/me", response_model=List[TicketResponse])
+def get_my_tickets(
+    db: Session = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    """
+    Retorna todos os ingressos comprados pelo usuário logado.
+    Usa 'joinedload' para já trazer as informações do Evento junto com o Ingresso.
+    """
+    tickets = db.query(Ticket)\
+        .options(joinedload(Ticket.event))\
+        .filter(Ticket.client_id == user_id)\
+        .all()
+        
+    return tickets
