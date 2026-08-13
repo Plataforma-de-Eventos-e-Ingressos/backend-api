@@ -45,6 +45,7 @@ class Event(Base):
     price = Column(Float, nullable=False)
     total_capacity = Column(Integer, nullable=False)
     description = Column(Text, nullable=True)
+    poster_url = Column(String, nullable=True)
 
     organizer = relationship("User", back_populates="events")
     tickets = relationship("Ticket", back_populates="event")

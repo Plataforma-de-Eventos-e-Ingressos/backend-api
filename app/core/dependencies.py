@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import jwt
 from jwt.exceptions import InvalidTokenError
+import uuid
 
 from app.core.database import get_db
 from app.models.models import User, RoleEnum
@@ -23,10 +24,13 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except InvalidTokenError:
+            
+        user_id_uuid = uuid.UUID(user_id) 
+        
+    except (InvalidTokenError, ValueError):
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id_uuid).first()
     if user is None:
         raise credentials_exception
         
