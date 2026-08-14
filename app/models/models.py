@@ -48,7 +48,7 @@ class Event(Base):
     poster_url = Column(String, nullable=True)
 
     organizer = relationship("User", back_populates="events")
-    tickets = relationship("Ticket", back_populates="event")
+    tickets = relationship("Ticket", back_populates="event", cascade="all, delete-orphan")
 
 
 class Ticket(Base):

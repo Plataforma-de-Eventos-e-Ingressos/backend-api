@@ -73,3 +73,6 @@ class TicketResponse(BaseModel):
     event: EventResponse  # Traz os dados do evento embutidos (nome, data, local)
 
     model_config = ConfigDict(from_attributes=True)
+
+class TicketValidateSchema(BaseModel):
+    qr_token: str

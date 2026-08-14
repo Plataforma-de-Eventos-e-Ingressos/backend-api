@@ -5,8 +5,8 @@ from typing import List
 from uuid import UUID
 
 from app.core.database import get_db
-from app.models.models import Event, User, RoleEnum, Ticket # Adicionado Ticket
-from app.schemas.schemas import EventCreate, EventUpdate, EventResponse # Adicionado EventUpdate
+from app.models.models import Event, User, RoleEnum, Ticket, TicketStatus 
+from app.schemas.schemas import EventCreate, EventUpdate, EventResponse 
 from app.core.dependencies import RoleChecker
 from app.services.services import search_movies
 
@@ -96,11 +96,15 @@ def delete_event(
             detail="Você só pode deletar os seus próprios eventos."
         )
 
-    tickets_sold = db.query(func.count(Ticket.id)).filter(Ticket.event_id == id).scalar()
+    tickets_sold = db.query(Ticket).filter(
+        Ticket.event_id == id,
+        Ticket.status != TicketStatus.CANCELLED
+    ).count() 
+
     if tickets_sold > 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Não é possível deletar este evento pois já existem ingressos reservados/vendidos."
+            detail="Não é possível deletar este evento pois ainda existem ingressos ativos."
         )
 
     db.delete(event)
