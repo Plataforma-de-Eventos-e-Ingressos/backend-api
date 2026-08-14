@@ -1,5 +1,5 @@
-from database import SessionLocal
-from models import User, Event, RoleEnum
+from app.core.database import SessionLocal
+from app.models.models import User, Event, RoleEnum
 import bcrypt
 from datetime import datetime, timedelta, timezone
 
