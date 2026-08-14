@@ -12,7 +12,7 @@ from app.models.models import User
 
 from app.core.database import get_db
 from app.models.models import Event, Ticket, TicketStatus
-from app.schemas.schemas import TicketCreate, TicketResponse
+from app.schemas.schemas import TicketCreate, TicketResponse, TicketValidateSchema
 from dotenv import load_dotenv
 import os
 
@@ -173,4 +173,34 @@ def simulate_payment(
         "ticket_id": ticket.id,
         "status": ticket.status,
         "qr_token": ticket.qr_token
+    }
+
+@router.post("/validate", status_code=status.HTTP_200_OK)
+def validate_ticket(
+    validation_data: TicketValidateSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    ticket = db.query(Ticket).filter(Ticket.qr_token == validation_data.qr_token).first()
+    
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ingresso inválido ou não encontrado.")
+        
+    if ticket.status == TicketStatus.CANCELLED:
+        raise HTTPException(status_code=400, detail="Este ingresso foi cancelado.")
+        
+    if ticket.status == TicketStatus.VALIDATED:
+        raise HTTPException(status_code=409, detail="Atenção: Este ingresso já foi utilizado (Dupla validação)!")
+        
+    if ticket.status != TicketStatus.PAID:
+        raise HTTPException(status_code=400, detail="Este ingresso ainda não foi pago.")
+    
+    ticket.status = TicketStatus.VALIDATED
+    db.commit()
+    
+    return {
+        "message": "Ingresso válido com sucesso!",
+        "event_title": ticket.event.title,
+        "seat": ticket.seat or "Pista",
+        "client_id": str(ticket.client_id)
     }

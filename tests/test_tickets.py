@@ -189,3 +189,83 @@ def test_simulate_payment_success(client, db_session, test_client_token, test_ti
     db_session.refresh(test_ticket)
     assert test_ticket.status == "PAID"
     assert test_ticket.qr_token is not None
+
+def test_validate_ticket_success(client, db_session, test_client_token, test_ticket):
+    """Testa a validação de um ingresso pago e válido (Caminho Feliz)."""
+    # Prepara o cenário: Ingresso pago e com um QR Token
+    test_ticket.status = "PAID"
+    test_ticket.qr_token = "hash_valido_123"
+    db_session.commit()
+
+    response = client.post(
+        "/tickets/validate",
+        headers={"Authorization": f"Bearer {test_client_token}"},
+        json={"qr_token": "hash_valido_123"}
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["message"] == "Ingresso válido com sucesso!"
+    
+    db_session.refresh(test_ticket)
+    assert test_ticket.status == "VALIDATED"
+
+
+def test_validate_ticket_not_found(client, test_client_token):
+    """Testa a tentativa de validar um QR Code que não existe."""
+    response = client.post(
+        "/tickets/validate",
+        headers={"Authorization": f"Bearer {test_client_token}"},
+        json={"qr_token": "token_inventado_ou_errado"}
+    )
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response.json()["detail"] == "Ingresso inválido ou não encontrado."
+
+
+def test_validate_ticket_already_used(client, db_session, test_client_token, test_ticket):
+    """Testa a tentativa de dupla validação (ingresso já utilizado)."""
+    test_ticket.status = "VALIDATED" # Já passou pela portaria
+    test_ticket.qr_token = "hash_valido_123"
+    db_session.commit()
+
+    response = client.post(
+        "/tickets/validate",
+        headers={"Authorization": f"Bearer {test_client_token}"},
+        json={"qr_token": "hash_valido_123"}
+    )
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert "já foi utilizado" in response.json()["detail"]
+
+
+def test_validate_ticket_unpaid(client, db_session, test_client_token, test_ticket):
+    """Testa a tentativa de validar um ingresso apenas reservado (não pago)."""
+    test_ticket.status = "RESERVED"
+    test_ticket.qr_token = "hash_valido_123"
+    db_session.commit()
+
+    response = client.post(
+        "/tickets/validate",
+        headers={"Authorization": f"Bearer {test_client_token}"},
+        json={"qr_token": "hash_valido_123"}
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "ainda não foi pago" in response.json()["detail"]
+
+
+def test_validate_ticket_cancelled(client, db_session, test_client_token, test_ticket):
+    """Testa a tentativa de validar um ingresso que foi cancelado."""
+    test_ticket.status = "CANCELLED"
+    test_ticket.qr_token = "hash_valido_123"
+    db_session.commit()
+
+    response = client.post(
+        "/tickets/validate",
+        headers={"Authorization": f"Bearer {test_client_token}"},
+        json={"qr_token": "hash_valido_123"}
+    )
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "foi cancelado" in response.json()["detail"]
