@@ -143,6 +143,7 @@ python seed.py
 | ----------- | ----------------------- | ------- | ------------------------------------------------- |
 | Organizador | `organizador@email.com` | `admin` | Gestão e criação de eventos                       |
 | Cliente     | `cliente@email.com`     | `admin` | Compra de ingressos                               |
+| Cliente2    | `cliente2@email.com`    | `admin` | Compra de ingressos                               |
 | Portaria    | `portaria@email.com`    | `admin` | Validação de QR Codes na entrada                  |
 
 ---
