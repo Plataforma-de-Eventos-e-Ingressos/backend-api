@@ -17,27 +17,34 @@ def run_seed():
             return
         
         organizer = User(
-            name = "Organizer User",
-            email = "organizador@email.com",
-            password_hash = get_password_hash("admin"),
-            role = RoleEnum.ORGANIZADOR
+            name="Organizador",
+            email="organizador@email.com",
+            password_hash=get_password_hash("admin"),
+            role=RoleEnum.ORGANIZADOR
         )
 
-        client = User(
-            name="Cliente",
+        client1 = User(
+            name="Cliente 1",
             email="cliente@email.com",
             password_hash=get_password_hash("admin"),
-            role = RoleEnum.CLIENTE
+            role=RoleEnum.CLIENTE
+        )
+
+        client2 = User(
+            name="Cliente 2",
+            email="cliente2@email.com",
+            password_hash=get_password_hash("admin"),
+            role=RoleEnum.CLIENTE
         )
 
         administrative = User(
             name="Portaria",
             email="portaria@email.com",
             password_hash=get_password_hash("admin"),
-            role = RoleEnum.PORTARIA
+            role=RoleEnum.PORTARIA
         )
 
-        db.add_all([organizer, client, administrative])
+        db.add_all([organizer, client1, client2, administrative])
         db.commit()
 
         db.refresh(organizer) 
