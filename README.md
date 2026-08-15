@@ -1,6 +1,6 @@
 # ⚙️ Backend API - Plataforma de Eventos & Ingressos
 
-Este repositório contém a **API RESTful** da plataforma de eventos e ingressos desenvolvida para o desafio técnico **Elite Dev**, da **Verzel**.
+Este repositório contém a **API RESTful** da plataforma de eventos e ingressos.
 
 Construída com **Python e FastAPI**, esta aplicação foca em performance, tipagem rigorosa, arquitetura limpa e na resolução do problema de concorrência na venda de ingressos (*Double Booking*).
 
