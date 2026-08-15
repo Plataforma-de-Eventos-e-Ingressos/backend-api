@@ -1,62 +1,69 @@
-# ⚙️ Backend API - Event and Ticketing Platform API
+# ⚙️ Backend API - Plataforma de Eventos & Ingressos
 
 Este repositório contém a **API RESTful** da plataforma de eventos e ingressos desenvolvida para o desafio técnico **Elite Dev**, da **Verzel**.
 
-A aplicação foi construída utilizando **Python e FastAPI**, com foco em performance, tipagem, organização arquitetural e documentação automatizada.
+Construída com **Python e FastAPI**, esta aplicação foca em performance, tipagem rigorosa, arquitetura limpa e na resolução do problema de concorrência na venda de ingressos (*Double Booking*).
 
-A API concentra as principais regras de negócio da plataforma, incluindo:
+---
 
-* 🎟️ Gerenciamento de eventos e ingressos;
-* 👤 Autenticação e autorização de usuários;
-* 💺 Controle de disponibilidade e reserva de ingressos;
-* 🔒 Prevenção de venda duplicada de assentos;
-* 🌐 Integração com APIs externas, como **TMDb/Ticketmaster**;
-* 📱 Geração e validação de QR Codes seguros;
-* 🔐 Utilização de **JWT** para autenticação e segurança dos ingressos;
-* 🗄️ Persistência dos dados em PostgreSQL.
+## 🌟 Destaques da Solução
+
+### 🔒 Prevenção de Venda Duplicada (*Double Booking*)
+
+Utilização de **Row-Level Locks** (`with_for_update` / `SELECT FOR UPDATE`) no PostgreSQL para garantir que transações concorrentes aguardem a liberação da linha.
+
+Caso o assento já esteja reservado, a API retorna **`409 Conflict`**.
+
+### 🌐 Integração com API Externa
+
+Integração com a API do **TMDb** para busca e autocompletar informações relacionadas a eventos, filmes e shows.
+
+### 🛡️ Segurança e QR Code
+
+Geração de tokens de ingresso criptografados utilizando **JWT**, protegendo os ingressos contra falsificação e permitindo sua validação na portaria.
+
+### 💺 Matemática de Assentos Blindada
+
+O Back-end não confia no payload enviado pelo Front-end para calcular a capacidade de eventos com assentos marcados.
+
+A capacidade é automaticamente calculada a partir de:
+
+```text
+linhas × cadeiras
+```
+
+Esse cálculo é realizado no Back-end no momento da criação do evento, evitando manipulações da capacidade através de requisições modificadas.
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Tecnologia       | Utilização                             |
-| :--------------- | :------------------------------------- |
-| **Python 3.10+** | Linguagem principal                    |
-| **FastAPI**      | Framework para construção da API REST  |
-| **Uvicorn**      | Servidor ASGI                          |
-| **SQLAlchemy**   | ORM para acesso ao banco de dados      |
-| **PostgreSQL**   | Banco de dados relacional              |
-| **Pydantic**     | Validação e serialização de dados      |
-| **Alembic**      | Gerenciamento de migrações do banco    |
-| **JWT**          | Autenticação e segurança dos ingressos |
+| Tecnologia       | Utilização                            |
+| ---------------- | ------------------------------------- |
+| **Python 3.10+** | Linguagem principal                   |
+| **FastAPI**      | Framework para construção da API REST |
+| **Uvicorn**      | Servidor ASGI                         |
+| **SQLAlchemy**   | ORM para modelagem e acesso ao banco  |
+| **PostgreSQL**   | Banco de dados relacional             |
+| **Alembic**      | Gerenciamento de migrações do banco   |
+| **Pytest**       | Suíte de testes automatizados         |
 
 ---
 
 ## 🚀 Como Executar Localmente
 
-> Para executar todo o ecossistema utilizando Docker, consulte o repositório de **Infraestrutura e Documentação**.
+> 💡 **Dica:** Para executar todo o ecossistema com Docker, consulte o repositório central **[docs-e-infra](link-do-repo-infra)**.
 
-### 📋 Pré-requisitos
-
-Antes de iniciar, certifique-se de possuir:
-
-* **Python 3.10 ou superior**;
-* **PostgreSQL** em execução localmente ou através do Docker;
-* **Git** instalado;
-* Uma chave de API para os serviços externos utilizados pelo projeto.
-
----
+Caso deseje executar a API de forma isolada para desenvolvimento:
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/Plataforma-de-Eventos-e-Ingressos/backend-api.git
+git clone https://github.com/SuaOrganizacao/backend-api.git
 cd backend-api
 ```
 
----
-
-### 2. Crie o ambiente virtual
+### 2. Crie e ative o ambiente virtual
 
 #### Linux / macOS
 
@@ -72,114 +79,35 @@ python -m venv venv
 venv\Scripts\activate
 ```
 
-Após a ativação, o terminal deverá indicar que o ambiente virtual está ativo.
-
----
-
 ### 3. Instale as dependências
-
-Com o ambiente virtual ativado:
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+### 4. Configure as variáveis de ambiente
 
-## ⚙️ Configuração das Variáveis de Ambiente
-
-Crie um arquivo `.env` na raiz do projeto.
-
-Utilize o seguinte modelo:
+Crie um arquivo `.env` na raiz do projeto:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/verzel_events
-SECRET_KEY=sua_chave_secreta_jwt
-API_EXTERNAL_KEY=sua_chave_tmdb_ou_ticketmaster
+SECRET_KEY=sua_chave_secreta_jwt_super_segura
+API_EXTERNAL_KEY=sua_chave_da_api_do_tmdb
 ```
 
-### Variáveis disponíveis
+> **Importante:** substitua os valores de exemplo pelas credenciais reais do ambiente de desenvolvimento.
 
-| Variável           | Descrição                                         |
-| :----------------- | :------------------------------------------------ |
-| `DATABASE_URL`     | URL de conexão com o PostgreSQL                   |
-| `SECRET_KEY`       | Chave utilizada para assinatura dos tokens JWT    |
-| `API_EXTERNAL_KEY` | Chave de autenticação utilizada nas APIs externas |
+### 5. Execute as migrações do banco de dados
 
-> ⚠️ **Importante:** nunca versione o arquivo `.env` ou exponha chaves e credenciais reais no repositório.
-
-Recomenda-se adicionar o arquivo ao `.gitignore`:
-
-```gitignore
-.env
-venv/
-__pycache__/
-```
-
----
-
-## 🗄️ Migrações do Banco de Dados
-
-O projeto utiliza **Alembic** para controlar a evolução do schema do banco de dados.
-
-Antes de iniciar a API pela primeira vez, certifique-se de que:
-
-1. O PostgreSQL está em execução;
-2. O banco de dados configurado em `DATABASE_URL` existe;
-3. O ambiente virtual está ativado;
-4. As dependências foram instaladas.
-
-### Aplicar as migrações
-
-Execute na raiz do projeto:
+Com o PostgreSQL em execução, execute:
 
 ```bash
 alembic upgrade head
 ```
 
-Esse comando aplica todas as migrações pendentes e cria/atualiza as tabelas necessárias.
+Esse comando aplica todas as migrações existentes e cria a estrutura necessária para a aplicação.
 
-### Criar uma nova migração
-
-Caso os modelos do SQLAlchemy sejam alterados, uma nova migração pode ser gerada automaticamente:
-
-```bash
-alembic revision --autogenerate -m "descricao_da_alteracao"
-```
-
-Depois de revisar a migração gerada, aplique-a com:
-
-```bash
-alembic upgrade head
-```
-
----
-
-## 🧪 Populando o Banco de Dados (Seed)
-
-Para facilitar os testes locais, o projeto disponibiliza um script de **seed** responsável por popular o banco de dados com dados iniciais.
-
-O seed cria os usuários base do sistema:
-
-* 👤 **Organizador**
-* 🎟️ **Cliente**
-* 🚪 **Portaria**
-* 🎫 Um evento de exemplo com ingressos disponíveis
-
-Com o PostgreSQL em execução e as migrações aplicadas, execute na raiz do projeto:
-
-```bash
-python seed.py
-```
-
-Após a execução, os dados estarão disponíveis para realizar os testes dos principais fluxos da aplicação.
-
-> **Nota:** o script de seed deve ser utilizado apenas em ambientes de desenvolvimento/teste. Não é recomendado executá-lo em ambientes de produção.
-
-
-## ▶️ Iniciando a API
-
-Com o ambiente virtual ativado, as dependências instaladas, as variáveis configuradas e as migrações aplicadas, execute:
+### 6. Inicie a API
 
 ```bash
 uvicorn main:app --reload
@@ -191,123 +119,94 @@ A API estará disponível em:
 http://localhost:8000
 ```
 
-O parâmetro `--reload` habilita o recarregamento automático do servidor durante o desenvolvimento.
+---
+
+## 🧪 Dados de Teste (Seed)
+
+Para facilitar a avaliação, o projeto inclui um script que popula o banco de dados com os cenários necessários, incluindo:
+
+* Organizador;
+* Clientes;
+* Portaria;
+* Evento ativo;
+* Dados necessários para testar o fluxo de compra.
+
+Com o banco de dados configurado, execute:
+
+```bash
+python seed.py
+```
+
+### Credenciais
+
+| Perfil      | E-mail                  | Senha   | Papel no Sistema                                  |
+| ----------- | ----------------------- | ------- | ------------------------------------------------- |
+| Organizador | `organizador@email.com` | `admin` | Gestão e criação de eventos                       |
+| Cliente     | `cliente@email.com`     | `admin` | Compra de ingressos                               |
+| Portaria    | `portaria@email.com`    | `admin` | Validação de QR Codes na entrada                  |
 
 ---
 
-## 📖 Documentação da API
+## 🚦 Testes Automatizados
 
-Por utilizar FastAPI, a documentação interativa da API é gerada automaticamente.
+Para garantir a confiabilidade das regras de negócio, o projeto conta com uma suíte de testes automatizados utilizando **Pytest**.
 
-Com o servidor em execução, acesse:
+Para executar todos os testes:
+
+```bash
+pytest -v
+```
+
+Os testes cobrem cenários críticos, incluindo:
+
+* Prevenção de venda duplicada de assentos;
+* Retorno de **`409 Conflict`** quando o mesmo assento já está reservado;
+* Concorrência entre diferentes clientes tentando adquirir o mesmo assento;
+* Cancelamento de ingressos;
+* Devolução de ingressos ao estoque;
+* Restrições para exclusão de eventos que já possuem ingressos vendidos;
+* Retorno de **`400 Bad Request`** em operações que violam as regras de negócio.
+
+### Teste de concorrência
+
+Um dos cenários principais é:
+
+```text
+test_reserve_already_booked_seat_fails
+```
+
+Esse teste garante que uma tentativa de reservar um assento já ocupado seja rejeitada corretamente, evitando o problema de **Double Booking**.
+
+---
+
+## 📖 Documentação Interativa da API
+
+A API possui documentação automática gerada pelo **FastAPI**.
+
+Com o servidor em execução:
+
+```bash
+uvicorn main:app --reload
+```
+
+acesse:
 
 ### Swagger UI
 
-`http://localhost:8000/docs`
+```text
+http://localhost:8000/docs
+```
 
 ### ReDoc
 
-`http://localhost:8000/redoc`
-
-O **Swagger UI** permite visualizar os endpoints disponíveis, seus parâmetros, schemas e também realizar requisições diretamente pelo navegador.
-
----
-
-## 🗄️ Estrutura do Banco de Dados
-
-O modelo relacional da aplicação está documentado no repositório de infraestrutura.
-
-Acesse o [modelo de dados](https://github.com/Plataforma-de-Eventos-e-Ingressos/docs-and-infra/blob/main/documents/data-model.md) para visualizar as entidades e seus relacionamentos.
-
----
-
-## 🔐 Segurança
-
-A API possui mecanismos para proteger os principais fluxos do sistema, incluindo:
-
-* Autenticação baseada em **JWT**;
-* Validação de permissões de acordo com o papel do usuário;
-* QR Codes associados aos ingressos;
-* Validação de ingressos na entrada do evento;
-* Controle de concorrência para evitar a venda duplicada de ingressos;
-* Persistência transacional das operações críticas.
-
-A lógica de concorrência é especialmente importante no fluxo de compra, garantindo que duas requisições simultâneas não consigam adquirir o mesmo ingresso.
-
----
-
-## 🌐 Integrações Externas
-
-A API possui integração com serviços externos de catálogo de eventos e conteúdos.
-
-Entre as integrações utilizadas estão:
-
-* **TMDb** — obtenção de informações relacionadas a filmes e conteúdos;
-* **Ticketmaster** — integração com informações de eventos e ingressos.
-
-As credenciais necessárias devem ser configuradas através das variáveis de ambiente.
-
----
-
-## 📁 Execução com Docker
-
-Para executar o ecossistema completo — incluindo **PostgreSQL, Back-end e Front-end** — consulte o repositório:
-
-**docs-and-infra**
-
-A infraestrutura centralizada fornece o `docker-compose.yml` responsável pela orquestração do ambiente local.
-
----
-
-## 🧪 Fluxo Recomendado para Desenvolvimento
-
-Uma execução típica do projeto pode seguir os seguintes passos:
-
 ```text
-1. Clonar o repositório
-        ↓
-2. Criar o ambiente virtual
-        ↓
-3. Instalar as dependências
-        ↓
-4. Configurar o arquivo .env
-        ↓
-5. Iniciar o PostgreSQL
-        ↓
-6. Executar as migrações do Alembic
-        ↓
-7. Iniciar a API com Uvicorn
-        ↓
-8. Acessar o Swagger
+http://localhost:8000/redoc
 ```
 
----
-
-## 📌 Resumo dos Principais Comandos
-
-| Ação                   | Comando                                          |
-| :--------------------- | :----------------------------------------------- |
-| Criar ambiente virtual | `python -m venv venv`                            |
-| Ativar no Linux/macOS  | `source venv/bin/activate`                       |
-| Ativar no Windows      | `venv\Scripts\activate`                          |
-| Instalar dependências  | `pip install -r requirements.txt`                |
-| Aplicar migrações      | `alembic upgrade head`                           |
-| Criar migração         | `alembic revision --autogenerate -m "descricao"` |
-| Iniciar API            | `uvicorn main:app --reload`                      |
-
----
-
-## 📚 Links Úteis
-
-* [FastAPI](https://fastapi.tiangolo.com/)
-* [SQLAlchemy](https://www.sqlalchemy.org/)
-* [Alembic](https://alembic.sqlalchemy.org/)
-* [Pydantic](https://docs.pydantic.dev/)
-* [PostgreSQL](https://www.postgresql.org/)
-* [Uvicorn](https://www.uvicorn.org/)
+A documentação permite visualizar os endpoints, modelos de requisição e resposta e testar as operações diretamente pelo navegador.
 
 ---
 
 ## 👨‍💻 Desenvolvedor
 
-Desenvolvido por **Robson do Amaral Diógenes** como parte do desafio técnico **Elite Dev - Verzel**.
+Desenvolvido por **Robson do Amaral Diógenes**.
