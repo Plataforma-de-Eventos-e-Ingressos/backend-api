@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from uuid import UUID
 from app.models.models import RoleEnum
 
@@ -29,6 +29,9 @@ class EventCreate(BaseModel):
     total_capacity: int
     description: Optional[str] = None
     poster_url: Optional[str] = None
+    has_assigned_seats: bool = False
+    rows_count: Optional[int] = None  
+    seats_per_row: Optional[int] = None
 
 class EventUpdate(BaseModel):
     title: Optional[str] = None
@@ -40,9 +43,14 @@ class EventUpdate(BaseModel):
     poster_url: Optional[str] = None
 class EventResponse(EventBase):
     id: UUID
-    organizer_id: UUID
+    title: str
+    event_datetime: datetime
+    location: str
+    price: float
+    total_capacity: int
     description: Optional[str] = None
     poster_url: Optional[str] = None
+    has_assigned_seats: bool
 
     class Config:
         from_attributes = True
@@ -62,6 +70,8 @@ class UserResponse(BaseModel):
 
 class TicketCreate(BaseModel):
     event_id: UUID
+    quantity: Optional[int] = 1 
+    seat_ids: Optional[List[UUID]] = [] 
     seat: Optional[str] = None
 
 class TicketResponse(BaseModel):

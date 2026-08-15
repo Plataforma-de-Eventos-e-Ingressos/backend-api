@@ -7,9 +7,8 @@ from sqlalchemy import func
 import jwt
 from jwt.exceptions import InvalidTokenError
 from typing import List
+from app.models.models import User, Seat
 from app.core.dependencies import get_current_user
-from app.models.models import User
-
 from app.core.database import get_db
 from app.models.models import Event, Ticket, TicketStatus
 from app.schemas.schemas import TicketCreate, TicketResponse, TicketValidateSchema
@@ -26,77 +25,86 @@ router = APIRouter(prefix="/tickets", tags=["tickets"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-
-def get_current_user_id(token: str = Depends(oauth2_scheme)):
-    """Decodifica o token JWT enviado pelo React e retorna o ID do usuário logado"""
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais inválidas")
-        return uuid.UUID(user_id)
-    except InvalidTokenError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido ou expirado")
-
-
-@router.post("/reserve", status_code=status.HTTP_201_CREATED)
+@router.post("/reserve", response_model=List[TicketResponse], status_code=status.HTTP_201_CREATED)
 def reserve_ticket(
     ticket_data: TicketCreate,
     db: Session = Depends(get_db),
-    user_id: uuid.UUID = Depends(get_current_user_id)
+    current_user: User = Depends(get_current_user)
 ):
-    event_id = ticket_data.event_id
-    if isinstance(event_id, str):
-        event_id = uuid.UUID(event_id)
-        
-    seat = ticket_data.seat
-    
-    client_id = user_id 
-
-    event = db.query(Event).filter(Event.id == event_id).first()
+    user_id = current_user.id
+    event = db.query(Event).filter(Event.id == ticket_data.event_id).first()
     if not event:
         raise HTTPException(status_code=404, detail="Evento não encontrado.")
 
-    tickets_sold = db.query(Ticket).filter(
-        Ticket.event_id == event_id,
-        Ticket.status != TicketStatus.CANCELLED
-    ).count()
-    
-    if tickets_sold >= event.total_capacity:
-        raise HTTPException(status_code=400, detail="Os ingressos para este evento estão esgotados.")
+    created_tickets = []
 
-    if seat:
-        existing_seat = db.query(Ticket).filter(
-            Ticket.event_id == event_id, 
-            Ticket.seat == seat,
-            Ticket.status != TicketStatus.CANCELLED
-        ).first()
+    if event.has_assigned_seats:
+        if not ticket_data.seat_ids or len(ticket_data.seat_ids) == 0:
+            raise HTTPException(status_code=400, detail="Este evento exige a seleção de assentos no mapa.")
         
-        if existing_seat:
-            raise HTTPException(status_code=409, detail=f"O assento {seat} já está reservado.")
+        seats = db.query(Seat).filter(Seat.id.in_(ticket_data.seat_ids)).with_for_update().all()
+        
+        if len(seats) != len(ticket_data.seat_ids):
+            raise HTTPException(status_code=400, detail="Um ou mais assentos são inválidos ou não existem.")
+            
+        for seat in seats:
+            if seat.status != "available":
+                raise HTTPException(status_code=409, detail=f"O assento {seat.row}{seat.number} acabou de ser reservado por outra pessoa.")
+            if seat.event_id != event.id:
+                raise HTTPException(status_code=400, detail=f"O assento {seat.row}{seat.number} não pertence a este evento.")
+                
+        for seat in seats:
+            seat.status = "reserved"
+            
+            raw_token = f"{event.id}-{user_id}-{uuid.uuid4()}"
+            qr_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+            
+            new_ticket = Ticket(
+                event_id=event.id,
+                client_id=user_id,
+                seat=f"{seat.row}{seat.number}",
+                status=TicketStatus.RESERVED,
+                qr_token=qr_hash
+            )
+            db.add(new_ticket)
+            created_tickets.append(new_ticket)
 
-    raw_token = f"{event_id}-{client_id}-{uuid.uuid4()}"
-    qr_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    else:
+        quantity = ticket_data.quantity or 1
+        tickets_sold = db.query(Ticket).filter(
+            Ticket.event_id == event.id,
+            Ticket.status != TicketStatus.CANCELLED
+        ).count()
+        
+        if tickets_sold + quantity > event.total_capacity:
+            raise HTTPException(status_code=400, detail="Não há ingressos suficientes disponíveis.")
 
-    new_ticket = Ticket(
-        event_id=event_id,
-        client_id=client_id,
-        seat=seat,
-        status=TicketStatus.RESERVED,
-        qr_token=qr_hash
-    )
+        for _ in range(quantity):
+            raw_token = f"{event.id}-{user_id}-{uuid.uuid4()}"
+            qr_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+            
+            new_ticket = Ticket(
+                event_id=event.id,
+                client_id=user_id,
+                seat=None, # Lotação geral não tem assento
+                status=TicketStatus.RESERVED,
+                qr_token=qr_hash
+            )
+            db.add(new_ticket)
+            created_tickets.append(new_ticket)
 
-    db.add(new_ticket)
     db.commit()
-    db.refresh(new_ticket)
+    for t in created_tickets:
+        db.refresh(t)
 
-    return new_ticket
+    return created_tickets
 
 @router.get("/me", response_model=List[TicketResponse])
 def get_my_tickets(
     db: Session = Depends(get_db),
-    user_id: uuid.UUID = Depends(get_current_user_id)
+    current_user: uuid.UUID = Depends(get_current_user)
 ):
+    user_id = current_user.id
     tickets = db.query(Ticket)\
         .options(joinedload(Ticket.event))\
         .filter(Ticket.client_id == user_id)\
@@ -121,18 +129,24 @@ def cancel_ticket(
     
     if not ticket:
         raise HTTPException(status_code=404, detail="Ingresso não encontrado.")
-        
     if ticket.client_id != current_user.id:
         raise HTTPException(status_code=403, detail="Você não tem permissão para cancelar este ingresso.")
-        
     if ticket.status == "CANCELLED":
         raise HTTPException(status_code=400, detail="Este ingresso já está cancelado.")
 
     event = db.query(Event).filter(Event.id == ticket.event_id).first()
-    
     ticket.status = "CANCELLED"
-    if event:
+    
+    if event and not event.has_assigned_seats:
         event.total_capacity += 1
+    
+    if event and event.has_assigned_seats and ticket.seat:
+        row_letter = ticket.seat[0]
+        seat_num = int(ticket.seat[1:])
+        
+        seat = db.query(Seat).filter(Seat.event_id == event.id, Seat.row == row_letter, Seat.number == seat_num).first()
+        if seat:
+            seat.status = "available"
         
     db.commit()
     db.refresh(ticket)
