@@ -1,7 +1,7 @@
 import uuid
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Enum, Text
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, Enum, Text, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -18,6 +18,11 @@ class TicketStatus(str, enum.Enum):
     PAID = "PAID"
     VALIDATED = "VALIDATED"
     CANCELLED = "CANCELLED"
+
+class SeatStatus(str, enum.Enum):
+    AVAILABLE = "available"
+    RESERVED = "reserved"
+    SOLD = "sold"
 
 class User(Base):
     __tablename__ = "users"
@@ -46,7 +51,9 @@ class Event(Base):
     total_capacity = Column(Integer, nullable=False)
     description = Column(Text, nullable=True)
     poster_url = Column(String, nullable=True)
+    has_assigned_seats = Column(Boolean, default=False)
 
+    seats = relationship("Seat", back_populates="event", cascade="all, delete-orphan")
     organizer = relationship("User", back_populates="events")
     tickets = relationship("Ticket", back_populates="event", cascade="all, delete-orphan")
 
@@ -64,3 +71,17 @@ class Ticket(Base):
 
     event = relationship("Event", back_populates="tickets")
     client = relationship("User", back_populates="tickets")
+
+class Seat(Base):
+    __tablename__ = "seats"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    
+    event_id = Column(UUID(as_uuid=True), ForeignKey("events.id"), nullable=False)
+    
+    row = Column(String(10), nullable=False)
+    number = Column(Integer, nullable=False)
+    
+    status = Column(String(20), default=SeatStatus.AVAILABLE, nullable=False)
+
+    event = relationship("Event", back_populates="seats")

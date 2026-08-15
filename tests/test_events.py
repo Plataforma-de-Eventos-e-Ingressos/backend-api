@@ -183,3 +183,30 @@ def test_delete_event_with_sold_tickets(client, db_session, org_user, client_use
     response = client.delete(f"/events/{event.id}", headers=org_headers)
     assert response.status_code == 400
     assert "Não é possível deletar este evento" in response.json()["detail"]
+
+def test_create_event_overrides_capacity_with_seat_math(client, test_organizer_token):
+    """
+    Testa se o sistema ignora o 'total_capacity' enviado no payload e 
+    calcula a capacidade real (linhas * colunas) quando o evento tem lugar marcado.
+    """
+    org_headers = {"Authorization": f"Bearer {test_organizer_token}"}
+    
+    payload = {
+        "title": "Show com Capacidade Calculada",
+        "event_datetime": "2026-10-10T20:00:00",
+        "location": "Teatro Central",
+        "price": 80.00,
+        "description": "Teste de override de capacidade",
+        "has_assigned_seats": True,
+        
+        "total_capacity": 999,  
+        "rows_count": 3,     
+        "seats_per_row": 4   
+    }
+    
+    response = client.post("/events/", json=payload, headers=org_headers)
+    assert response.status_code == 201
+    
+    data = response.json()
+    
+    assert data["total_capacity"] == 12
