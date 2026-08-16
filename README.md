@@ -52,14 +52,14 @@ Esse cálculo é realizado no Back-end no momento da criação do evento, evitan
 
 ## 🚀 Como Executar Localmente
 
-> 💡 **Dica:** Para executar todo o ecossistema com Docker, consulte o repositório central **[docs-e-infra](link-do-repo-infra)**.
+> 💡 **Dica:** Para executar todo o ecossistema com Docker, consulte o repositório central **[docs-e-infra](https://github.com/Plataforma-de-Eventos-e-Ingressos/docs-and-infra)**.
 
 Caso deseje executar a API de forma isolada para desenvolvimento:
 
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/SuaOrganizacao/backend-api.git
+git clone https://github.com/Plataforma-de-Eventos-e-Ingressos/backend-api.git
 cd backend-api
 ```
 
@@ -202,6 +202,11 @@ http://localhost:8000/docs
 
 ```text
 http://localhost:8000/redoc
+```
+
+### Produção
+```text
+https://elite-tickets-api.onrender.com/docs
 ```
 
 A documentação permite visualizar os endpoints, modelos de requisição e resposta e testar as operações diretamente pelo navegador.
