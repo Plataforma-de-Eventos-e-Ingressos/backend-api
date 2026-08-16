@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 import string
 from app.core.database import get_db
@@ -59,8 +59,16 @@ def create_event(
     return new_event
 
 @router.get("/", response_model=List[EventResponse])
-def list_events(db: Session = Depends(get_db)):
-    return db.query(Event).all()
+def list_events(
+    search: Optional[str] = None, 
+    db: Session = Depends(get_db)
+):
+    query = db.query(Event)
+    
+    if search:
+        query = query.filter(Event.title.ilike(f"%{search}%"))
+        
+    return query.all()
 
 @router.get("/{id}", response_model=EventResponse)
 def get_event(id: UUID, db: Session = Depends(get_db)):
